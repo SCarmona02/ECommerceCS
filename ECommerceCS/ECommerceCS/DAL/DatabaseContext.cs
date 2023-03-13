@@ -11,5 +11,11 @@ namespace ECommerceCS.DAL
         }
 
         public DbSet<Country> Countries { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Country>().HasIndex(country => country.Name).IsUnique();
+        }
     }
 }
