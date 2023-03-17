@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ECommerceCS.DAL;
 using ECommerceCS.DAL.Entities;
+using ECommerceCS.Models;
 
 namespace ECommerceCS.Controllers
 {
@@ -178,6 +179,28 @@ namespace ECommerceCS.Controllers
         private bool CountryExists(Guid id)
         {
             return _context.Countries.Any(e => e.Id == id);
+        }
+
+        public async Task<IActionResult> AddState(Guid? countryId)
+        {
+            if(countryId == null)
+            {
+            Console.WriteLine(countryId);
+                return NotFound();
+            }
+
+            Country country = await _context.Countries.FindAsync(countryId);
+            if(country == null)
+            {
+                return NotFound();
+            }
+
+            StateViewModel stateViewModel = new()
+            {
+                CountryId = country.Id
+            };
+
+            return View(stateViewModel);
         }
     }
 }
