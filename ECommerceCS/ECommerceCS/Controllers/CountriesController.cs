@@ -25,20 +25,20 @@ namespace ECommerceCS.Controllers
         #endregion
 
         #region Private Methods
-        private async Task<Country> GetCountryById(Guid? id)
+        private async Task<Country> GetCountryById(Guid? countryId)
         {
             Country country = await _context.Countries
                 .Include(country => country.States)
-                .FirstOrDefaultAsync(country => country.Id == id);
+                .FirstOrDefaultAsync(country => country.Id == countryId);
             return country;
         }
 
-        private async Task<State> GetStateById(Guid? id)
+        private async Task<State> GetStateById(Guid? stateId)
         {
             State state = await _context.States
                 .Include(state => state.Country)
                 .Include(state => state.Cities)
-                .FirstOrDefaultAsync(state => state.Id == id);
+                .FirstOrDefaultAsync(state => state.Id == stateId);
             return state;
         }
 
