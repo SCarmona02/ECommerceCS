@@ -20,10 +20,16 @@ namespace ECommerceCS.Controllers
             _context = context;
         }
 
+        private async Task<Country> GetCountryById(Guid? id)
+        {
+            Country country = await _context.Countries.FirstOrDefaultAsync(country => country.Id == id);
+            return country;
+        }
+
         // GET: Countries
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Countries.ToListAsync());
+            return View(await _context.Countries.Include(country => country.States).ToListAsync());
         }
 
         // GET: Countries/Details/5
@@ -59,9 +65,10 @@ namespace ECommerceCS.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(country);
                 try
                 {
+                    country.CreatedDate = DateTime.Now;
+                    _context.Add(country);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
 
@@ -92,7 +99,7 @@ namespace ECommerceCS.Controllers
                 return NotFound();
             }
 
-            var country = await _context.Countries.FindAsync(id);
+            var country = await GetCountryById(id);
             if (country == null)
             {
                 return NotFound();
@@ -116,6 +123,7 @@ namespace ECommerceCS.Controllers
             {
                 try
                 {
+                    country.UpdatedDate = DateTime.Now;
                     _context.Update(country);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
@@ -166,7 +174,7 @@ namespace ECommerceCS.Controllers
             {
                 return Problem("Entity set 'DatabaseContext.Countries'  is null.");
             }
-            var country = await _context.Countries.FindAsync(id);
+            var country = await GetCountryById(id);
             if (country != null)
             {
                 _context.Countries.Remove(country);
@@ -185,11 +193,10 @@ namespace ECommerceCS.Controllers
         {
             if(countryId == null)
             {
-            Console.WriteLine(countryId);
                 return NotFound();
             }
 
-            Country country = await _context.Countries.FindAsync(countryId);
+            Country country = await GetCountryById(countryId);
             if(country == null)
             {
                 return NotFound();
@@ -202,5 +209,46 @@ namespace ECommerceCS.Controllers
 
             return View(stateViewModel);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddState(StateViewModel stateViewModel)
+        {
+            if(ModelState.IsValid) 
+            {
+                try
+                {
+                    State state = new State()
+                    {
+                        Cities = new List<City>(),
+                        Country = await GetCountryById(stateViewModel.CountryId),
+                        Name = stateViewModel.Name,
+                        CreatedDate = DateTime.Now,
+                        UpdatedDate = null,
+                    };
+
+                    _context.Add(state);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Details), new { Id = stateViewModel.CountryId});
+                }
+                catch (DbUpdateException dbUpdateException)
+                {
+                    if (dbUpdateException.InnerException.Message.Contains("duplicate"))
+                    {
+                        ModelState.AddModelError(string.Empty, "Ya existe un Departamento/Estado con el mismo nombre en este país.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, dbUpdateException.InnerException.Message);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    ModelState.AddModelError(string.Empty, exception.Message);
+                }
+            }
+            return View(stateViewModel);
+        }
+
     }
 }
