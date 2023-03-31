@@ -22,7 +22,9 @@ namespace ECommerceCS.Controllers
 
         private async Task<Country> GetCountryById(Guid? id)
         {
-            Country country = await _context.Countries.FirstOrDefaultAsync(country => country.Id == id);
+            Country country = await _context.Countries
+                .Include(country => country.States)
+                .FirstOrDefaultAsync(country => country.Id == id);
             return country;
         }
 
@@ -33,15 +35,16 @@ namespace ECommerceCS.Controllers
         }
 
         // GET: Countries/Details/5
-        public async Task<IActionResult> Details(Guid? id)
+        public async Task<IActionResult> Details(Guid? countryId)
         {
-            if (id == null || _context.Countries == null)
+            if (countryId == null || _context.Countries == null)
             {
                 return NotFound();
             }
 
             var country = await _context.Countries
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .Include(country => country.States)
+                .FirstOrDefaultAsync(m => m.Id == countryId);
             if (country == null)
             {
                 return NotFound();
@@ -156,6 +159,7 @@ namespace ECommerceCS.Controllers
             }
 
             var country = await _context.Countries
+                .Include(country => country.States)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (country == null)
             {
@@ -229,7 +233,7 @@ namespace ECommerceCS.Controllers
 
                     _context.Add(state);
                     await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Details), new { Id = stateViewModel.CountryId});
+                    return RedirectToAction(nameof(Details), new {stateViewModel.CountryId});
                 }
                 catch (DbUpdateException dbUpdateException)
                 {
@@ -250,5 +254,75 @@ namespace ECommerceCS.Controllers
             return View(stateViewModel);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> EditState(Guid? stateId)
+        {
+            if(stateId == null || _context.States == null)
+            {
+                return NotFound();
+            }
+
+            State state = await _context.States
+                .Include(state => state.Country)
+                .FirstOrDefaultAsync(state => state.Id == stateId);
+
+            if(state == null)
+            {
+                return NotFound();
+            }
+            StateViewModel stateViewModel = new()
+            {
+                CountryId = state.Country.Id,
+                Id = state.Id,
+                Name = state.Name,
+                CreatedDate = DateTime.Now,
+            };
+
+            return View(stateViewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditState(Guid countryId, StateViewModel stateViewModel)
+        {
+            if (countryId != stateViewModel.CountryId)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    State state = new()
+                    {
+                        Id = stateViewModel.Id,
+                        Name = stateViewModel.Name,
+                        CreatedDate = stateViewModel.CreatedDate,
+                        UpdatedDate = DateTime.Now,
+                    };
+
+                    _context.Update(state);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Details), new { stateViewModel.CountryId });
+                }
+                catch (DbUpdateException dbUpdateException)
+                {
+                    if (dbUpdateException.InnerException.Message.Contains("duplicate"))
+                    {
+                        ModelState.AddModelError(string.Empty, "Ya existe un estado con el mismo nombre.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, dbUpdateException.InnerException.Message);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    ModelState.AddModelError(string.Empty, exception.Message);
+                }
+            }
+            return View(stateViewModel);
+        }
     }
 }
