@@ -70,6 +70,7 @@ namespace ECommerceCS.Controllers
 
             var country = await _context.Countries
                 .Include(country => country.States)
+                .ThenInclude(state => state.Cities)
                 .FirstOrDefaultAsync(m => m.Id == countryId);
             if (country == null)
             {

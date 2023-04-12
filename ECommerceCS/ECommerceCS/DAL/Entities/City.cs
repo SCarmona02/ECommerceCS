@@ -9,6 +9,7 @@ namespace ECommerceCS.DAL.Entities
         [Required(ErrorMessage = "El campo {0} es obligatorio")]
         public string Name { get; set; }
 
+        [Display(Name = "Estado")]
         public State State { get; set; }
     }
 }

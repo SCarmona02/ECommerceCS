@@ -49,13 +49,14 @@ namespace ECommerceCS.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Category Category)
+        public async Task<IActionResult> Create(Category category)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(Category);
                 try
                 {
+                    category.CreatedDate = DateTime.Now;
+                    _context.Add(category);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
 
@@ -76,7 +77,7 @@ namespace ECommerceCS.Controllers
                     ModelState.AddModelError(string.Empty, exception.Message);
                 }
             }
-            return View(Category);
+            return View(category);
         }
 
         // GET: Categories/Edit/5
@@ -100,9 +101,9 @@ namespace ECommerceCS.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, Category Category)
+        public async Task<IActionResult> Edit(Guid id, Category category)
         {
-            if (id != Category.Id)
+            if (id != category.Id)
             {
                 return NotFound();
             }
@@ -111,7 +112,8 @@ namespace ECommerceCS.Controllers
             {
                 try
                 {
-                    _context.Update(Category);
+                    category.UpdatedDate = DateTime.Now;
+                    _context.Update(category);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
                 }
@@ -131,7 +133,7 @@ namespace ECommerceCS.Controllers
                     ModelState.AddModelError(string.Empty, exception.Message);
                 }
             }
-            return View(Category);
+            return View(category);
         }
 
         // GET: Categories/Delete/5
