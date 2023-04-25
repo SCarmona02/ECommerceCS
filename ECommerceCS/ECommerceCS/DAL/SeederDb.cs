@@ -1,23 +1,34 @@
 ﻿using ECommerceCS.DAL.Entities;
+using ECommerceCS.Enums;
+using ECommerceCS.Helpers;
 
 namespace ECommerceCS.DAL
 {
     public class SeederDb
     {
         private readonly DatabaseContext _context;
+        private readonly IUserHelper _userHelper;
 
-        public SeederDb(DatabaseContext context)
+        public SeederDb(DatabaseContext context, IUserHelper userHelper)
         {
             _context = context;
+            _userHelper = userHelper;
         }
 
         public async Task SeederAsync()
         {
+            var email = "est_santi@yopmail.com";
+
             await _context.Database.EnsureCreatedAsync();
             await PopulateCategoriesAsync();
             await PopulateCountriesAsync();
+            await PopulateRolesAsync();
+            await PopulateUserAsync("Admin", "Role", "admin_role@yopmail.com", "3002456895", "Street", "102030", UserType.Admin);
+            await PopulateUserAsync("User", "Role", "user_role@yopmail.com", "4002456895", "Fighters", "405060", UserType.User);
+
             await _context.SaveChangesAsync();
         }
+
 
         private async Task PopulateCategoriesAsync()
         {
@@ -105,6 +116,36 @@ namespace ECommerceCS.DAL
                         }
                     }
                 });
+            }
+        }
+        private async Task PopulateRolesAsync()
+        {
+            await _userHelper.CheckRoleAsync(UserType.Admin.ToString());
+            await _userHelper.CheckRoleAsync(UserType.User.ToString());
+        }
+
+        private async Task PopulateUserAsync(string firstName, string lastName, string email, string phone, string address, string document, UserType userType)
+        {
+            User user = await _userHelper.GetUserAsync(email);
+
+            if (user == null) 
+            {
+                user = new User
+                {
+                    CreatedDate = DateTime.Now,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Email = email,
+                    UserName = email,
+                    PhoneNumber = phone,
+                    Address = address,
+                    Document = document,
+                    City = _context.Cities.FirstOrDefault(),
+                    UserType = UserType.Admin,
+                };
+
+                await _userHelper.AddUserAsync(user, "123456");
+                await _userHelper.AddUserToRoleAsync(user, userType.ToString());
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using ECommerceCS.DAL.Entities;
+using ECommerceCS.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace ECommerceCS.Helpers
@@ -14,5 +15,9 @@ namespace ECommerceCS.Helpers
         Task AddUserToRoleAsync(User user, string roleName);
 
         Task<bool> IsUserInRoleAsync(User user, string roleName);
+
+        Task<SignInResult> LoginAsync(LoginViewModel loginViewModel);
+
+        Task LogOutAsync();
     }
 }
